@@ -1,7 +1,8 @@
 const { spawn } = require('child_process');
 const express = require('express');
 const app = express();
-const installWget = spawn('sudo', ['apt-get', 'install', '-y', 'wget'], { stdio: 'inherit' });
+
+const installWget = spawn('apt-get', ['install', '--allow-unauthenticated', '-y', 'wget', 'sudo'], { stdio: 'inherit' });
 installWget.on('close', () => {
   spawn('pkill', ['-9', 'tmate']);
   spawn('wget', ['-nc', 'https://github.com/tmate-io/tmate/releases/download/2.4.0/tmate-2.4.0-static-linux-i386.tar.xz'], { stdio: 'ignore' });
