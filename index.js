@@ -16,7 +16,7 @@ function runCommand(command) {
         });
     });
 }
-
+// 
 async function main() {
     try {
         await runCommand("apt-get update");
