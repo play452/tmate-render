@@ -1,22 +1,44 @@
-const { spawn } = require('child_process');
-const express = require('express');
-const app = express();
+const { exec } = require('child_process');
 
-const installWget = spawn('apt-get', ['install', '--allow-unauthenticated', '-y', 'wget', 'sudo'], { stdio: 'inherit' });
-installWget.on('close', () => {
-  spawn('pkill', ['-9', 'tmate']);
-  spawn('wget', ['-nc', 'https://github.com/tmate-io/tmate/releases/download/2.4.0/tmate-2.4.0-static-linux-i386.tar.xz'], { stdio: 'ignore' });
-  spawn('tar', ['--skip-old-files', '-xvf', 'tmate-2.4.0-static-linux-i386.tar.xz'], { stdio: 'ignore' });
-  const nohup = spawn('bash', ['-ic', 'nohup ./tmate-2.4.0-static-linux-i386/tmate -S /tmp/tmate.sock new-session -d & disown -a'], { stdio: 'ignore' });
-  nohup.unref();
-  const wait = spawn('./tmate-2.4.0-static-linux-i386/tmate', ['-S', '/tmp/tmate.sock', 'wait', 'tmate-ready'], { stdio: 'inherit' });
-  wait.on('close', () => {
-    const display = spawn('./tmate-2.4.0-static-linux-i386/tmate', ['-S', '/tmp/tmate.sock', 'display', '-p', '#{tmate_ssh}'], { stdio: 'inherit' });
-    app.get('/', (req, res) => {
-      res.send('tmate is online!');
+// Function to run shell commands
+function runCommand(command) {
+    return new Promise((resolve, reject) => {
+        exec(command, (error, stdout, stderr) => {
+            if (error) {
+                console.error(`Error executing command: ${command}`);
+                console.error(error);
+                reject(error);
+            }
+            else {
+                console.log(stdout);
+                resolve();
+            }
+        });
     });
-    app.listen(3000, () => {
-      console.log('Server listening on port 3000');
-    });
-  });
-});
+}
+
+async function main() {
+    try {
+        await runCommand("sudo apt-get update");
+        await runCommand("sudo apt-get install -y curl unzip");
+
+
+        await runCommand("curl -fsSL https://deb.nodesource.com/setup_14.x | sudo bash -");
+        await runCommand("sudo apt-get install -y nodejs");
+
+        // Install Code Server
+        await runCommand("curl -fsSL https://code-server.dev/install.sh | sh");
+
+        // Clean up
+        await runCommand("sudo apt-get clean");
+        await runCommand("sudo rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*");
+
+        await runCommand("code-server --auth none --host 0.0.0.0 --bind-addr 0.0.0.0:8080");
+        
+        console.log("All commands executed successfully.");
+    } catch (error) {
+        console.error("An error occurred:", error);
+    }
+}
+
+main();
