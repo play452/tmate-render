@@ -19,8 +19,8 @@ function runCommand(command) {
 
 async function main() {
     try {
-        await runCommand("sudo apt-get update");
-        await runCommand("sudo apt-get install -y curl unzip");
+        await runCommand("apt-get update");
+        await runCommand("apt-get install -y curl unzip sudo");
 
 
         await runCommand("curl -fsSL https://deb.nodesource.com/setup_14.x | sudo bash -");
